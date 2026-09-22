@@ -1,0 +1,23 @@
+[project]
+name = "fastapi-ii"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Lians", email = "paterninalopezlians@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standar]>=0.141.1",
+    "psycopg2>=2.9.13",
+    "sqlalchemy>=2.0.54",
+    "sqlmodel>=0.0.46",
+    "uvicorn>=0.53.0",
+]
+
+[project.scripts]
+fastapi-ii = "fastapi_ii:main"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"
