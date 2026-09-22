@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlmodel import Field, SQLModel, create_engine,Session, select
 from contextlib import asynccontextmanager
-
+from app.models import Product, ProductCreate, UpdateProduct
 
 #Connetion with Supabase
 DATABASE_URL = "postgresql://postgres.ewewniiixfunicnwsbyr:RiwiMaku57a#@aws-0-us-east-2.pooler.supabase.com:5432/postgres"
@@ -15,25 +15,6 @@ def get_session():
     with Session(engine) as session:
         yield session
 
-
-#Template Model
-class ProductBase(SQLModel):
-    name     : str
-    price    : float
-    quantity : int
-    category : str 
-
-#Create Product Model
-class ProductCreate(ProductBase):
-    pass
-
-class UpdateProduct(ProductBase):
-    pass
-    
-#Database Model
-class Product(ProductBase, table=True):
-     id : int | None = Field(default=None, primary_key=True)
-    
 
 @asynccontextmanager
 async def life_span(app:FastAPI):
@@ -86,17 +67,22 @@ async def deleted_product(id:int, db:Session= Depends(get_session)):
             detail= f"Error, product not removed {str(err)}"
         )
 @app.patch("/products/{id}")
-async def update_product(id:int, db:Session=Depends(get_session)):
-    product = db.get(Product, id)
+async def update_product(id:int,product_data:UpdateProduct, db:Session=Depends(get_session)):
+    db_product = db.get(Product, id)
     
-    if not product: 
+    if not db_product: 
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Update: Product not found!"
         )
-
-        
-
+    
+    updated_data = product_data.model_dump(exclude_unset=True)
+    db_product.sqlmodel_update(updated_data)
+    
+    db.add(db_product)
+    db.commit()
+    db.refresh(db_product)
+    return db_product
 
 
 
