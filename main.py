@@ -1,45 +1,55 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from sqlmodel import Field, SQLModel, create_engine,Session, select
-from contextlib import asynccontextmanager
-from app.models import Product, ProductCreate, UpdateProduct
-
-#Connetion with Supabase
-DATABASE_URL = "postgresql://postgres.ewewniiixfunicnwsbyr:RiwiMaku57a#@aws-0-us-east-2.pooler.supabase.com:5432/postgres"
-
-engine = create_engine(DATABASE_URL, echo=True)
-
-def init_db():
-    SQLModel.metadata.create_all(engine)
-
-def get_session():
-    with Session(engine) as session:
-        yield session
-
-
-@asynccontextmanager
-async def life_span(app:FastAPI):
-    init_db()
-    yield
+from fastapi import FastAPI, HTTPException, status
+from sqlmodel import  select
+from src.app.models import Product, ProductCreate, UpdateProduct
+from src.shared.database.session import life_span, SessionDep
+from sqlalchemy.exc import IntegrityError
 
 app = FastAPI(
     title="API Inventory",
     lifespan=life_span
 )
+## ONLY GETS ONE PRODUCT
+@app.get(
+    "/products/",
+    response_model=list[Product], 
+    status_code=status.HTTP_200_OK
+    )
 
-@app.get("/products/",response_model=list[Product])
-async def get_all_products(db:Session = Depends(get_session)):
-    products = db.exec(select(Product)).all()
+async def get_all_products(db:SessionDep):
+    
+    products = (
+        db.
+        exec(select(Product)).
+        all())
+    
     return products
 
 
-@app.post("/products/", response_model=Product, status_code=status.HTTP_201_CREATED)
-async def new_product(new_product: ProductCreate, db:Session = Depends(get_session)):
+## ONLY POST ONE PRODUCT
+@app.post(
+    "/products/", 
+    response_model=Product, 
+    status_code=status.
+    HTTP_201_CREATED
+    )
+
+async def new_product(new_product: ProductCreate, db: SessionDep):
+    
     try:
+        
         db_product = Product.model_validate(new_product)
         db.add(db_product)
         db.commit()
         db.refresh(db_product)
+        
         return db_product
+    
+    except IntegrityError as err:
+        db.rollback()
+        raise HTTPException(
+            status_code = status.HTTP_409_CONFLICT,
+            detail= f"Error, there is a conflict between products names or sku"
+        ) 
     except Exception as err:
         db.rollback()
         raise HTTPException(
@@ -47,8 +57,11 @@ async def new_product(new_product: ProductCreate, db:Session = Depends(get_sessi
             detail=f"Error, invalid values: {str(err)}"
         )
 
+            
+#DELETE ONE PRODUCT
 @app.delete("/products/{id}")
-async def deleted_product(id:int, db:Session= Depends(get_session)):
+async def deleted_product(id:int, db:SessionDep):
+    
     product = db.get(Product, id)
     
     if not product:
@@ -66,8 +79,12 @@ async def deleted_product(id:int, db:Session= Depends(get_session)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail= f"Error, product not removed {str(err)}"
         )
+        
+        
+#UPDATED PRODUCT
 @app.patch("/products/{id}")
-async def update_product(id:int,product_data:UpdateProduct, db:Session=Depends(get_session)):
+async def update_product(id:int,product_data:UpdateProduct, db:SessionDep):
+    
     db_product = db.get(Product, id)
     
     if not db_product: 
@@ -82,6 +99,7 @@ async def update_product(id:int,product_data:UpdateProduct, db:Session=Depends(g
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
+    
     return db_product
 
 
