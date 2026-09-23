@@ -8,14 +8,18 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi[standar]>=0.141.1",
-    "psycopg2>=2.9.13",
+    "fastapi[standard]>=0.141.1",
+    "psycopg2-binary>=2.9.13",
     "python-dotenv>=1.2.3",
     "sqlalchemy>=2.0.54",
     "sqlmodel>=0.0.46",
     "uvicorn>=0.53.0",
 ]
 
+[tool.setuptools.packages.find]
+where = ["."]
+[tool.uv]
+package = false
 [project.scripts]
 fastapi-ii = "fastapi_ii:main"
 

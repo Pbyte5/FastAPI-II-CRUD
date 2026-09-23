@@ -24,7 +24,6 @@ async def get_all_products(db:SessionDep):
     
     return products
 
-
 ## ONLY POST ONE PRODUCT
 @app.post(
     "/products/", 
@@ -48,7 +47,7 @@ async def new_product(new_product: ProductCreate, db: SessionDep):
         db.rollback()
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT,
-            detail= f"Error, there is a conflict between products names or sku"
+            detail= f"Error, The names or sku already exits! "
         ) 
     except Exception as err:
         db.rollback()
