@@ -23,6 +23,6 @@ COPY --from=builder /fast-api-workdir/.venv /fast-api-workdir/.venv
 
 COPY . .
 
-ENV PATH="/fast-api-workdir/.venv/bin:$PATH"
+ENV PATH="/fast-api-workdir/.venv/bin:$PATHj"
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

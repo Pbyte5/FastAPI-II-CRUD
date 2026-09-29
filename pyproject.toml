@@ -8,9 +8,11 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "boto3>=1.43.104",
     "fastapi[standard]>=0.141.1",
     "psycopg2-binary>=2.9.13",
     "python-dotenv>=1.2.3",
+    "python-multipart>=0.0.32",
     "sqlalchemy>=2.0.54",
     "sqlmodel>=0.0.46",
     "uvicorn>=0.53.0",
